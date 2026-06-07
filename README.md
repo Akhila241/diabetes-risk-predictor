@@ -3,8 +3,7 @@
 A full stack machine learning web application that predicts diabetes risk based on patient health metrics.
 
 ## Live Demo
-[Click here to view the live app](#) ← we'll add this after deployment
-
+[Click here to view the live app](https://diabetes-risk-predictor-to0u.onrender.com)
 ## Screenshots
 ![App Screenshot](screenshot.png)
 

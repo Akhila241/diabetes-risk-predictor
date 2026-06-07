@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diabetes Risk Predictor</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        header h1 {
+            font-size: 28px;
+            color: #1a202c;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: #718096;
+            font-size: 15px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+            margin-bottom: 24px;
+        }
+
+        .card h2 {
+            font-size: 16px;
+            color: #4a5568;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1.5px solid #f0f4f8;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 6px;
+        }
+
+        .field input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #2d3748;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+
+        .field input:focus { border-color: #667eea; }
+
+        .hint {
+            font-size: 11px;
+            color: #a0aec0;
+            margin-top: 4px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 8px;
+        }
+
+        .btn:hover { background: #5a67d8; }
+        .btn:disabled { background: #a0aec0; cursor: not-allowed; }
+
+        /* Result card */
+        #result { display: none; }
+
+        .result-banner {
+            padding: 24px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .result-banner.high { background: #fff5f5; border: 1.5px solid #fc8181; }
+        .result-banner.low  { background: #f0fff4; border: 1.5px solid #68d391; }
+
+        .result-banner .label {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .result-banner.high .label { color: #c53030; }
+        .result-banner.low  .label { color: #276749; }
+
+        .result-banner .sublabel { color: #718096; font-size: 14px; }
+
+        /* Probability bar */
+        .prob-section { margin-bottom: 24px; }
+
+        .prob-section .prob-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #4a5568;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .prob-track {
+            background: #e2e8f0;
+            border-radius: 99px;
+            height: 12px;
+            overflow: hidden;
+        }
+
+        .prob-fill {
+            height: 100%;
+            border-radius: 99px;
+            transition: width 0.8s ease;
+            width: 0%;
+        }
+
+        .prob-fill.high { background: linear-gradient(90deg, #fc8181, #c53030); }
+        .prob-fill.low  { background: linear-gradient(90deg, #68d391, #276749); }
+
+        /* Feature importance */
+        .feature-list { display: flex; flex-direction: column; gap: 10px; }
+
+        .feature-row { display: flex; align-items: center; gap: 12px; }
+
+        .feature-name {
+            font-size: 13px;
+            color: #4a5568;
+            width: 160px;
+            flex-shrink: 0;
+        }
+
+        .feature-track {
+            flex: 1;
+            background: #e2e8f0;
+            border-radius: 99px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .feature-bar {
+            height: 100%;
+            border-radius: 99px;
+            background: #667eea;
+            transition: width 1s ease;
+        }
+
+        .feature-pct {
+            font-size: 12px;
+            color: #a0aec0;
+            width: 36px;
+            text-align: right;
+        }
+
+        /* Model comparison */
+        .model-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .model-card {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+            border: 1.5px solid #e2e8f0;
+        }
+
+        .model-card.active { border-color: #667eea; background: #ebf4ff; }
+
+        .model-card .model-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 6px;
+        }
+
+        .model-card .model-acc {
+            font-size: 26px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .model-card .model-sub {
+            font-size: 11px;
+            color: #a0aec0;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Diabetes Risk Predictor</h1>
+            <p>ML-powered prediction using Logistic Regression · Trained on 768 patient records</p>
+        </header>
+
+        <!-- Input card -->
+        <div class="card">
+            <h2>Patient Details</h2>
+            <div class="grid">
+                <div class="field">
+                    <label>Pregnancies</label>
+                    <input type="number" id="pregnancies" placeholder="e.g. 2" min="0">
+                    <p class="hint">Number of times pregnant</p>
+                </div>
+                <div class="field">
+                    <label>Glucose</label>
+                    <input type="number" id="glucose" placeholder="e.g. 120" min="0">
+                    <p class="hint">Plasma glucose (mg/dL)</p>
+                </div>
+                <div class="field">
+                    <label>Blood Pressure</label>
+                    <input type="number" id="bloodpressure" placeholder="e.g. 70" min="0">
+                    <p class="hint">Diastolic BP (mm Hg)</p>
+                </div>
+                <div class="field">
+                    <label>Skin Thickness</label>
+                    <input type="number" id="skinthickness" placeholder="e.g. 20" min="0">
+                    <p class="hint">Triceps skin fold (mm)</p>
+                </div>
+                <div class="field">
+                    <label>Insulin</label>
+                    <input type="number" id="insulin" placeholder="e.g. 80" min="0">
+                    <p class="hint">2-Hour serum insulin</p>
+                </div>
+                <div class="field">
+                    <label>BMI</label>
+                    <input type="number" id="bmi" placeholder="e.g. 28.5" step="0.1" min="0">
+                    <p class="hint">Body mass index</p>
+                </div>
+                <div class="field">
+                    <label>Diabetes Pedigree</label>
+                    <input type="number" id="diabetespedigree" placeholder="e.g. 0.5" step="0.001" min="0">
+                    <p class="hint">Family history score</p>
+                </div>
+                <div class="field">
+                    <label>Age</label>
+                    <input type="number" id="age" placeholder="e.g. 33" min="0">
+                    <p class="hint">Age in years</p>
+                </div>
+            </div>
+            <button class="btn" onclick="predict()" id="btn">Predict Risk</button>
+        </div>
+
+        <!-- Result section -->
+        <div id="result">
+
+            <!-- Banner -->
+            <div class="result-banner" id="banner">
+                <div class="label" id="risk-label"></div>
+                <div class="sublabel" id="risk-sub"></div>
+            </div>
+
+            <!-- Probability bar -->
+            <div class="card">
+                <h2>Diabetes Probability</h2>
+                <div class="prob-section">
+                    <div class="prob-label">
+                        <span>Risk Score</span>
+                        <span id="prob-text">0%</span>
+                    </div>
+                    <div class="prob-track">
+                        <div class="prob-fill" id="prob-fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feature importance -->
+            <div class="card">
+                <h2>Top Predictors for This Patient</h2>
+                <div class="feature-list" id="feature-list"></div>
+            </div>
+
+            <!-- Model comparison -->
+            <div class="card">
+                <h2>Model Comparison</h2>
+                <div class="model-grid">
+    <div class="model-card active">
+        <div class="model-name">Logistic Regression</div>
+        <div class="model-acc">{{ model_info.lr_accuracy }}%</div>
+        <div class="model-sub">Used for this prediction</div>
+    </div>
+    <div class="model-card">
+        <div class="model-name">Random Forest</div>
+        <div class="model-acc">{{ model_info.rf_accuracy }}%</div>
+        <div class="model-sub">Ensemble of 100 trees</div>
+    </div>
+</div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const features = [
+            { id: 'glucose',          label: 'Glucose',           max: 200 },
+            { id: 'bmi',              label: 'BMI',               max: 70  },
+            { id: 'age',              label: 'Age',               max: 80  },
+            { id: 'diabetespedigree', label: 'Diabetes Pedigree', max: 2.5 },
+            { id: 'insulin',          label: 'Insulin',           max: 850 },
+            { id: 'bloodpressure',    label: 'Blood Pressure',    max: 130 },
+            { id: 'skinthickness',    label: 'Skin Thickness',    max: 100 },
+            { id: 'pregnancies',      label: 'Pregnancies',       max: 17  },
+        ];
+
+        async function predict() {
+            const btn = document.getElementById('btn');
+            btn.disabled = true;
+            btn.textContent = 'Predicting...';
+
+            const data = {};
+            features.forEach(f => data[f.id] = document.getElementById(f.id).value || 0);
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                showResult(result, data);
+
+            } catch (e) {
+                alert('Something went wrong. Is Flask running?');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Predict Risk';
+        }
+
+        function showResult(result, data) {
+            const isHigh = result.prediction === 1;
+
+            // Banner
+            document.getElementById('banner').className = 'result-banner ' + (isHigh ? 'high' : 'low');
+            document.getElementById('risk-label').textContent = result.message;
+            document.getElementById('risk-sub').textContent = `Confidence: ${result.probability}%`;
+
+            // Probability bar
+            const fill = document.getElementById('prob-fill');
+            fill.className = 'prob-fill ' + (isHigh ? 'high' : 'low');
+            document.getElementById('prob-text').textContent = result.probability + '%';
+            setTimeout(() => fill.style.width = result.probability + '%', 100);
+
+            // Feature bars
+            const list = document.getElementById('feature-list');
+            list.innerHTML = '';
+            const importance = result.feature_importance;
+const featureMap = {
+    'Glucose': data['glucose'],
+    'BMI': data['bmi'],
+    'Age': data['age'],
+    'DiabetesPedigree': data['diabetespedigree'],
+    'Insulin': data['insulin'],
+    'BloodPressure': data['bloodpressure'],
+    'SkinThickness': data['skinthickness'],
+    'Pregnancies': data['pregnancies']
+};
+
+list.innerHTML = '';
+Object.entries(importance).forEach(([name, pct]) => {
+    const val = featureMap[name] || 0;
+    list.innerHTML += `
+        <div class="feature-row">
+            <span class="feature-name">${name}</span>
+            <div class="feature-track">
+                <div class="feature-bar" style="width:0%" data-pct="${pct}"></div>
+            </div>
+            <span class="feature-pct">${pct}%</span>
+        </div>`;
+});
+            setTimeout(() => {
+                document.querySelectorAll('.feature-bar').forEach(bar => {
+                    bar.style.width = bar.dataset.pct + '%';
+                });
+            }, 100);
+
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

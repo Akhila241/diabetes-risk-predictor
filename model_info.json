@@ -1,0 +1,1 @@
+{"lr_accuracy": 74.68, "rf_accuracy": 72.08, "feature_importance": {"Glucose": 25.9, "BMI": 17.0, "Age": 14.1, "DiabetesPedigree": 12.4, "BloodPressure": 8.8, "Pregnancies": 7.7, "Insulin": 7.6, "SkinThickness": 6.6}}
